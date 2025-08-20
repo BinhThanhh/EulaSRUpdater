@@ -200,12 +200,12 @@ async Task UpdateFromUpdateFile()
 async Task ShowGameInfo()
 {
     Console.WriteLine();
-    Console.Write("Nhập đường dẫn thư mục game (Enter để dùng mặc định F:\\HSR3.5.51): ");
+    Console.Write("Nhập đường dẫn thư mục game (Enter để dùng mặc định F:\\StarRail): ");
     var gamePath = Console.ReadLine()?.Trim();
     
     if (string.IsNullOrWhiteSpace(gamePath))
     {
-        gamePath = @"F:\HSR3.5.51";
+        gamePath = @"F:\StarRail";
     }
     
     Console.WriteLine();

@@ -38,8 +38,8 @@ public class GameUpdater
     // {
         // var config = new UpdateConfig
         // {
-        //     GamePath = @"F:\HSR3.5.51",
-        //     HDiffPaths = new[] { @"F:\game_3.5.51_3.5.52_hdiff.7z" },
+        //     GamePath = @"F:\StarRail",
+        //     HDiffPaths = new[] { @"F:\StarRail_3.5.51_3.5.52_hdiff_seg.7z" },
         //     CurrentVersion = "3.5.51",
         //     TargetVersion = "3.5.52"
         // };
@@ -254,7 +254,13 @@ public class GameUpdater
         // Ví dụ: game_3.5.51_3.5.52_hdiff -> (3.5.51, 3.5.52)
         var parts = fileName.Split('_');
         
-        if (parts.Length >= 3)
+        // Kiểm tra format StarRail_x.x.x_x.x.x_hdiff_seg
+        if (parts.Length >= 4 && parts[0].Equals("StarRail", StringComparison.OrdinalIgnoreCase))
+        {
+            return (parts[1], parts[2]);
+        }
+        // Kiểm tra format cũ game_x.x.x_x.x.x_hdiff
+        else if (parts.Length >= 3)
         {
             return (parts[1], parts[2]);
         }
