@@ -12,6 +12,8 @@ C:\Users\admin\Desktop\EulaSR\EulaSR\obj\Release\net9.0\refint\EulaSR.dll
 C:\Users\admin\Desktop\EulaSR\EulaSR\obj\Release\net9.0\EulaSR.pdb
 C:\Users\admin\Desktop\EulaSR\EulaSR\obj\Release\net9.0\EulaSR.genruntimeconfig.cache
 C:\Users\admin\Desktop\EulaSR\EulaSR\obj\Release\net9.0\ref\EulaSR.dll
+C:\Users\admin\Desktop\EulaSR\EulaSRUpdater\bin\Release\net9.0\tools\hdiffz.exe
+C:\Users\admin\Desktop\EulaSR\EulaSRUpdater\bin\Release\net9.0\tools\hpatchz.exe
 C:\Users\admin\Desktop\EulaSR\EulaSRUpdater\bin\Release\net9.0\EulaSR.exe
 C:\Users\admin\Desktop\EulaSR\EulaSRUpdater\bin\Release\net9.0\EulaSR.deps.json
 C:\Users\admin\Desktop\EulaSR\EulaSRUpdater\bin\Release\net9.0\EulaSR.runtimeconfig.json

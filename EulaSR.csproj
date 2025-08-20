@@ -7,8 +7,35 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)'=='Release'">
+    <DefineConstants>RELEASE</DefineConstants>
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <Optimize>false</Optimize>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="System.Text.Json" Version="9.0.0" />
   </ItemGroup>
+
+  <!-- Copy tools folder to output directory for Release builds -->
+  <ItemGroup Condition="'$(Configuration)'=='Release'">
+    <None Include="tools\**\*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!-- Alternative: Copy tools folder as a target -->
+  <Target Name="CopyToolsFolder" AfterTargets="Build" Condition="'$(Configuration)'=='Release'">
+    <ItemGroup>
+      <ToolsFiles Include="tools\**\*" />
+    </ItemGroup>
+    <Copy SourceFiles="@(ToolsFiles)" 
+          DestinationFiles="@(ToolsFiles->'$(OutputPath)tools\%(RecursiveDir)%(Filename)%(Extension)')" 
+          SkipUnchangedFiles="true" 
+          Condition="Exists('tools')" />
+    <Message Text="Copied tools folder to $(OutputPath)tools" Importance="high" Condition="Exists('tools')" />
+  </Target>
 
 </Project>

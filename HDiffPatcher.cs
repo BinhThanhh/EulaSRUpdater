@@ -18,19 +18,20 @@ public class HDiffPatcher
         _hPatchExecutable = FindExecutable("hpatchz"); // Tool chính để apply patch
         _hDiffExecutable = FindExecutable("hdiffz");   // Tool fallback
         
-        _logger.Info($"HPatch tool: {(_hPatchExecutable != null ? Path.GetFileName(_hPatchExecutable) : "Không tìm thấy")}");
-        _logger.Info($"HDiff tool: {(_hDiffExecutable != null ? Path.GetFileName(_hDiffExecutable) : "Không tìm thấy")}");
+
         
-        // Đảm bảo có ít nhất một tool
+        // Đảm bảo có cả 2 tools
         if (string.IsNullOrEmpty(_hPatchExecutable) && string.IsNullOrEmpty(_hDiffExecutable))
         {
             var baseDir = AppDomain.CurrentDomain.BaseDirectory;
-            throw new FileNotFoundException($"Không tìm thấy hpatchz.exe hoặc hdiffz.exe. Vui lòng đặt một trong hai file vào:\n" +
+            throw new FileNotFoundException($"Không tìm thấy hpatchz.exe hoặc hdiffz.exe. Vui lòng đặt hai file vào:\n" +
                 $"- {baseDir}\n" +
                 $"- {Path.Combine(baseDir, "tools")}\n" +
                 $"- {Environment.CurrentDirectory}\n" +
                 $"Hoặc thêm vào PATH.");
         }
+
+
     }
 
     /// <summary>
@@ -960,11 +961,12 @@ public class HDiffPatcher
             
             var tempFilesToDelete = new[]
             {
-                "deletefiles.txt",           // File danh sách xóa
-                "hdiffmap.json",            // File map JSON (chính)  
-                "hdiffmap.txt",             // File map text (JSON Lines format)
-                "hdiff_map.json",           // File map JSON (alternative name)
-                "hdiff_map.txt",            // File map text (alternative name)
+                "deletefiles.txt",           
+                "hdiffmap.txt",   
+                "hdiffmap.json",              
+                "hdiffmap.txt",             
+                "hdiff_map.json",           
+                "hdiff_map.txt",            
             };
 
             var deletedCount = 0;
@@ -1105,7 +1107,6 @@ public class HDiffPatcher
                 var fullPath = Path.Combine(searchPath, name);
                 if (File.Exists(fullPath))
                 {
-                    _logger.Debug($"Tìm thấy {toolName}: {fullPath}");
                     return fullPath;
                 }
             }
@@ -1122,14 +1123,13 @@ public class HDiffPatcher
                 var fullPath = Path.Combine(path, name);
                 if (File.Exists(fullPath))
                 {
-                    _logger.Debug($"Tìm thấy {toolName} trong PATH: {fullPath}");
+                    // _logger.Debug($"Tìm thấy {toolName} trong PATH: {fullPath}");
                     return fullPath;
                 }
             }
         }
 
         // Không tìm thấy - trả về null thay vì throw exception
-        _logger.Debug($"Không tìm thấy {toolName} executable");
         return null;
     }
 
