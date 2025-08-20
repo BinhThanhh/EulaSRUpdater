@@ -13,7 +13,8 @@ Công cụ cập nhật Honkai: Star Rail bằng file hdiff.
 
 1. **Tải HDiffZ:**
    - Tải từ: https://github.com/sisong/HDiffPatch/releases
-   - Giải nén và đặt `hdiffz.exe` vào PATH hoặc cùng thư mục với EulaSR.exe
+   - Tạo folder `tools`
+   - Giải nén và đặt `hdiffz.exe` vào folder `tools`
 
 2. **Cài đặt 7-Zip:**
    - Tải từ: https://www.7-zip.org/
