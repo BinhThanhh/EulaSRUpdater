@@ -8,9 +8,9 @@ public class GameUpdater
     private readonly string _configFile;
     private readonly Logger _logger;
 
-    public GameUpdater()
+    public GameUpdater(Logger? logger = null)
     {
-        _logger = new Logger();
+        _logger = logger ?? Logger.ConsoleOnly();
         _patcher = new HDiffPatcher(_logger);
         _configFile = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.json");
     }

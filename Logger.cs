@@ -2,16 +2,18 @@ namespace EulaSR;
 
 public class Logger
 {
-    private readonly string _logFile;
-    private readonly object _lockObject = new();
+    private readonly bool _enableFileLogging;
 
-    public Logger()
+    public Logger(bool enableFileLogging = false)
     {
-        var logDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
-        Directory.CreateDirectory(logDir);
-        
-        _logFile = Path.Combine(logDir, $"EulaSR_{DateTime.Now:yyyyMMdd_HHmmss}.log");
+        _enableFileLogging = enableFileLogging;
     }
+    
+    // Static method để tạo logger chỉ console
+    public static Logger ConsoleOnly() => new Logger(false);
+    
+    // Static method để tạo logger có cả file
+    public static Logger WithFile() => new Logger(true);
 
     public enum LogLevel
     {
@@ -29,8 +31,11 @@ public class Logger
         // Ghi console với màu sắc
         WriteToConsole(level, logEntry);
 
-        // Ghi file log
-        WriteToFile(logEntry);
+        // Chỉ ghi file log nếu được enable
+        if (_enableFileLogging)
+        {
+            WriteToFile(logEntry);
+        }
     }
 
     public void Info(string message) => Log(LogLevel.Info, message);
@@ -71,10 +76,12 @@ public class Logger
     {
         try
         {
-            lock (_lockObject)
-            {
-                File.AppendAllText(_logFile, logEntry + Environment.NewLine);
-            }
+            var logDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
+            Directory.CreateDirectory(logDir);
+            
+            var logFile = Path.Combine(logDir, $"EulaSR_{DateTime.Now:yyyyMMdd}.log");
+            
+            File.AppendAllText(logFile, logEntry + Environment.NewLine);
         }
         catch
         {
@@ -95,5 +102,11 @@ public class Logger
         Log(LogLevel.Info, $"{operation}: [{progressBar}] {percentage}% ({current}/{total})");
     }
 
-    public string GetLogFilePath() => _logFile;
+    public string GetLogFilePath() 
+    {
+        if (!_enableFileLogging) return "";
+        
+        var logDir = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs");
+        return Path.Combine(logDir, $"EulaSR_{DateTime.Now:yyyyMMdd}.log");
+    }
 }

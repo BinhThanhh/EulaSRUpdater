@@ -12,7 +12,7 @@ public class HDiffPatcher
     
     public HDiffPatcher(Logger? logger = null)
     {
-        _logger = logger ?? new Logger();
+        _logger = logger ?? Logger.ConsoleOnly();
         
         // Tìm cả hai tools
         _hPatchExecutable = FindExecutable("hpatchz"); // Tool chính để apply patch
@@ -336,7 +336,6 @@ public class HDiffPatcher
             try
             {
                 await ApplySinglePatchAsync(targetFilePath, hdiffFile, tempDir, hdiffMap);
-                _logger.Debug($"✅ Patch thành công: {originalFileName}");
             }
             catch (Exception ex)
             {
@@ -487,11 +486,9 @@ public class HDiffPatcher
             // Tạo file tạm cho kết quả
             var tempOutputFile = targetFile + ".new";
 
-            // Debug: Log thông tin về files trước khi patch
+            // Kiểm tra file sizes
             var originalInfo = new FileInfo(targetFile);
             var patchInfo = new FileInfo(patchFile);
-            _logger.Debug($"Original file: {originalInfo.Length} bytes");
-            _logger.Debug($"Patch file: {patchInfo.Length} bytes");
 
             // Kiểm tra tương thích file size (basic check)
             if (await ShouldSkipPatchDueToSizeMismatch(targetFile, patchFile, fileName))
@@ -536,14 +533,8 @@ public class HDiffPatcher
                 }
             }
 
-            if (patchSuccess)
+            if (!patchSuccess)
             {
-                _logger.Debug($"✅ Patch thành công với {usedTool} cho {fileName}");
-            }
-            else
-            {
-                _logger.Warning($"❌ Patch thất bại với tất cả tools cho {fileName}: {lastError}");
-                
                 // Cập nhật lastError với thông tin chi tiết
                 if (string.IsNullOrEmpty(_hPatchExecutable))
                 {
@@ -596,7 +587,7 @@ public class HDiffPatcher
                 throw new InvalidOperationException($"File output rỗng cho {fileName}");
             }
 
-            _logger.Debug($"Output file size: {outputInfo.Length} bytes");
+
 
             // Đối với file executable, kiểm tra xem có phải là HDiff patch file không
             if (isExecutable)
@@ -607,7 +598,6 @@ public class HDiffPatcher
                 if (stream.Length >= 2)
                 {
                     var firstBytes = reader.ReadUInt16();
-                    _logger.Debug($"First 2 bytes of output file: 0x{firstBytes:X4}");
                     
                     // Kiểm tra xem có phải là HDiff signature không (0x4448 = "HD")
                     if (firstBytes == 0x4448)
@@ -1188,7 +1178,6 @@ public class HDiffPatcher
         {
             // Thử với arguments cơ bản trước
             var arguments = $"\"{targetFile}\" \"{patchFile}\" \"{outputFile}\"";
-            _logger.Debug($"{toolName} command: {toolPath} {arguments}");
 
             var startInfo = new ProcessStartInfo
             {
@@ -1209,11 +1198,7 @@ public class HDiffPatcher
             
             await process.WaitForExitAsync();
 
-            _logger.Debug($"{toolName} exit code: {process.ExitCode}");
-            if (!string.IsNullOrEmpty(output))
-                _logger.Debug($"{toolName} output: {output}");
-            if (!string.IsNullOrEmpty(error))
-                _logger.Debug($"{toolName} error: {error}");
+
 
             if (process.ExitCode == 0 && File.Exists(outputFile))
             {
@@ -1223,8 +1208,6 @@ public class HDiffPatcher
             // Nếu thất bại với hdiffz, thử với -f flag
             if (toolName.Equals("hdiffz", StringComparison.OrdinalIgnoreCase))
             {
-                _logger.Debug($"Thử {toolName} với -f flag...");
-                
                 var altArguments = $"-f \"{targetFile}\" \"{patchFile}\" \"{outputFile}\"";
                 startInfo.Arguments = altArguments;
                 
@@ -1235,13 +1218,8 @@ public class HDiffPatcher
                 var error2 = await process2.StandardError.ReadToEndAsync();
                 await process2.WaitForExitAsync();
                 
-                _logger.Debug($"{toolName} -f exit code: {process2.ExitCode}");
-                if (!string.IsNullOrEmpty(error2))
-                    _logger.Debug($"{toolName} -f error: {error2}");
-                
                 if (process2.ExitCode == 0 && File.Exists(outputFile))
                 {
-                    _logger.Info($"✅ {toolName} thành công với -f flag");
                     return true;
                 }
             }
@@ -1250,7 +1228,6 @@ public class HDiffPatcher
         }
         catch (Exception ex)
         {
-            _logger.Debug($"Lỗi khi chạy {toolName}: {ex.Message}");
             return false;
         }
     }
@@ -1270,12 +1247,9 @@ public class HDiffPatcher
             
             if (targetSize < 200000 && patchSize > 10000000) // 200KB vs 10MB - chênh lệch quá lớn
             {
-                _logger.Debug($"Large size mismatch: target={targetSize}, patch={patchSize}, ratio={sizeRatio:F4}");
-                
                 // Chỉ bỏ qua nếu chênh lệch quá lớn (hơn 50 lần)
                 if (sizeRatio < 0.02) // target < 2% của patch size
                 {
-                    _logger.Warning($"⚠️ File {fileName} có size mismatch quá lớn - có thể patch không tương thích");
                     return true; // Bỏ qua patch này
                 }
             }
@@ -1284,7 +1258,6 @@ public class HDiffPatcher
         }
         catch (Exception ex)
         {
-            _logger.Debug($"Lỗi khi kiểm tra size mismatch: {ex.Message}");
             return false;
         }
     }
@@ -1371,14 +1344,12 @@ public class HDiffPatcher
             // Kiểm tra cơ bản: file tồn tại và có kích thước > 0
             if (!File.Exists(exePath))
             {
-                _logger.Debug($"File không tồn tại: {Path.GetFileName(exePath)}");
                 return false;
             }
 
             var fileInfo = new FileInfo(exePath);
             if (fileInfo.Length < 512) // File exe phải có ít nhất 512 bytes
             {
-                _logger.Debug($"File quá nhỏ: {Path.GetFileName(exePath)} ({fileInfo.Length} bytes)");
                 return false;
             }
 
@@ -1389,7 +1360,6 @@ public class HDiffPatcher
             // Kiểm tra có đủ dữ liệu để đọc DOS header không
             if (stream.Length < 64)
             {
-                _logger.Debug($"File quá nhỏ để có DOS header: {Path.GetFileName(exePath)}");
                 return false;
             }
             
@@ -1398,14 +1368,12 @@ public class HDiffPatcher
             var dosSignature = reader.ReadUInt16();
             if (dosSignature != 0x5A4D) // "MZ"
             {
-                _logger.Debug($"File {Path.GetFileName(exePath)} không có DOS signature hợp lệ (0x{dosSignature:X4})");
                 return false;
             }
 
             // Kiểm tra có đủ dữ liệu để đọc PE header offset không
             if (stream.Length < 0x40)
             {
-                _logger.Debug($"File quá nhỏ để có PE header offset: {Path.GetFileName(exePath)}");
                 return false;
             }
 
@@ -1415,14 +1383,12 @@ public class HDiffPatcher
 
             if (peHeaderOffset >= fileInfo.Length || peHeaderOffset < 0x40)
             {
-                _logger.Debug($"File {Path.GetFileName(exePath)} có PE header offset không hợp lệ (0x{peHeaderOffset:X8})");
                 return false;
             }
 
             // Kiểm tra có đủ dữ liệu để đọc PE signature không
             if (peHeaderOffset + 4 > stream.Length)
             {
-                _logger.Debug($"File quá nhỏ để chứa PE signature: {Path.GetFileName(exePath)}");
                 return false;
             }
 
@@ -1431,26 +1397,21 @@ public class HDiffPatcher
             var peSignature = reader.ReadUInt32();
             if (peSignature != 0x00004550) // "PE\0\0"
             {
-                _logger.Debug($"File {Path.GetFileName(exePath)} không có PE signature hợp lệ (0x{peSignature:X8})");
                 return false;
             }
 
-            _logger.Debug($"✅ File executable {Path.GetFileName(exePath)} có structure hợp lệ");
             return true;
         }
         catch (UnauthorizedAccessException)
         {
-            _logger.Debug($"Không có quyền truy cập file {Path.GetFileName(exePath)}");
             return false;
         }
         catch (IOException ex)
         {
-            _logger.Debug($"Lỗi I/O khi đọc file {Path.GetFileName(exePath)}: {ex.Message}");
             return false;
         }
         catch (Exception ex)
         {
-            _logger.Debug($"Lỗi khi validate executable {Path.GetFileName(exePath)}: {ex.Message}");
             return false;
         }
     }

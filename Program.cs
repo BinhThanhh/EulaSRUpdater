@@ -2,7 +2,26 @@
 
 Console.OutputEncoding = System.Text.Encoding.UTF8;
 
-var updater = new GameUpdater();
+// Kiểm tra argument để enable file logging nếu cần
+var enableFileLogging = args.Contains("--log-file") || args.Contains("-l");
+var logger = enableFileLogging ? Logger.WithFile() : Logger.ConsoleOnly();
+var updater = new GameUpdater(logger);
+
+if (enableFileLogging)
+{
+    Console.WriteLine($"📝 File logging enabled: {logger.GetLogFilePath()}");
+}
+
+// Hiển thị help nếu có --help
+if (args.Contains("--help") || args.Contains("-h"))
+{
+    Console.WriteLine("Usage: EulaSR.exe [options]");
+    Console.WriteLine("Options:");
+    Console.WriteLine("  --log-file, -l    Enable file logging (default: console only)");
+    Console.WriteLine("  --help, -h        Show this help message");
+    Console.WriteLine();
+    return;
+}
 
 Console.WriteLine("╔═════════════════════════════════════════════╗");
 Console.WriteLine("║           EULA SR Game Updater              ║");
