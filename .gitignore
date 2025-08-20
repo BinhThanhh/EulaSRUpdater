@@ -1,9 +1,5 @@
 #visual studio
 .vs
 
-#hdiff tools
-tools/hdiffz.exe
-bin/release/net9.0/tools/hdiffz.exe
-
 #Release
 bin/release/
