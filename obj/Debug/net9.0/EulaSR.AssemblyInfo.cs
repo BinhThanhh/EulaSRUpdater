@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("EulaSR")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+96f71001c33f0147442cee7a89a90851e7976bb7")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b9b0990f3fb0c8b757251c148874d8e6c18d1fe7")]
 [assembly: System.Reflection.AssemblyProductAttribute("EulaSR")]
 [assembly: System.Reflection.AssemblyTitleAttribute("EulaSR")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text.Json;
 
 namespace EulaSR;
@@ -22,6 +23,7 @@ public class GameUpdater
         public string CurrentVersion { get; set; } = "";
         public string TargetVersion { get; set; } = "";
         public string UpdateFilePath { get; set; } = "";
+        public string? Password { get; set; } = null; // Password cho file 7z được mã hóa
         
         // Backward compatibility
         public string HDiffPath 
@@ -84,7 +86,7 @@ public class GameUpdater
             });
 
             // Thực hiện cập nhật
-            var result = await _patcher.ApplyPatchesAsync(config.GamePath, config.HDiffPaths, progress);
+            var result = await _patcher.ApplyPatchesAsync(config.GamePath, config.HDiffPaths, progress, config.Password);
 
             if (result)
             {
@@ -318,9 +320,102 @@ public class GameUpdater
     }
 
     /// <summary>
+    /// Kiểm tra xem file 7z có được mã hóa hay không
+    /// </summary>
+    private async Task<bool> IsArchiveEncryptedAsync(string archivePath)
+    {
+        try
+        {
+            // Sử dụng 7-Zip để kiểm tra thông tin archive
+            var sevenZipPath = Find7ZipExecutable();
+            
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = sevenZipPath,
+                Arguments = $"l \"{archivePath}\"",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true
+            };
+
+            using var process = new Process { StartInfo = startInfo };
+            process.Start();
+
+            var output = await process.StandardOutput.ReadToEndAsync();
+            var error = await process.StandardError.ReadToEndAsync();
+            
+            await process.WaitForExitAsync();
+
+            // Kiểm tra output để xác định xem có encrypted không
+            if (output.Contains("Enter password") || error.Contains("Cannot open encrypted archive") ||
+                error.Contains("Wrong password") || output.Contains("*") || output.Contains("Encrypted"))
+            {
+                return true;
+            }
+
+            return false;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Không thể kiểm tra trạng thái mã hóa của file: {ex.Message}");
+            return false; // Giả định không encrypted nếu không kiểm tra được
+        }
+    }
+
+    /// <summary>
+    /// Tìm 7-Zip executable
+    /// </summary>
+    private string Find7ZipExecutable()
+    {
+        var possibleNames = new[] { "7z.exe", "7za.exe", "7z" };
+        var possiblePaths = new[]
+        {
+            @"C:\Program Files\7-Zip\7z.exe",
+            @"C:\Program Files (x86)\7-Zip\7z.exe"
+        };
+
+        // Kiểm tra đường dẫn mặc định
+        foreach (var path in possiblePaths)
+        {
+            if (File.Exists(path))
+            {
+                return path;
+            }
+        }
+
+        // Tìm trong PATH
+        var pathEnv = Environment.GetEnvironmentVariable("PATH") ?? "";
+        var paths = pathEnv.Split(Path.PathSeparator);
+
+        foreach (var path in paths)
+        {
+            foreach (var name in possibleNames)
+            {
+                var fullPath = Path.Combine(path, name);
+                if (File.Exists(fullPath))
+                {
+                    return fullPath;
+                }
+            }
+        }
+
+        // Tìm trong thư mục hiện tại
+        foreach (var name in possibleNames)
+        {
+            if (File.Exists(name))
+            {
+                return Path.GetFullPath(name);
+            }
+        }
+
+        throw new FileNotFoundException("Không tìm thấy 7-Zip executable. Vui lòng cài đặt 7-Zip và đảm bảo nó có trong PATH.");
+    }
+
+    /// <summary>
     /// Hiển thị thông tin về game hiện tại
     /// </summary>
-    public async Task ShowGameInfoAsync(string gamePath)
+    public Task ShowGameInfoAsync(string gamePath)
     {
         Console.WriteLine("=== Thông tin Game ===");
         Console.WriteLine($"Đường dẫn: {gamePath}");
@@ -328,7 +423,7 @@ public class GameUpdater
         if (!Directory.Exists(gamePath))
         {
             Console.WriteLine("❌ Thư mục không tồn tại");
-            return;
+            return Task.CompletedTask;
         }
 
         try
@@ -355,5 +450,7 @@ public class GameUpdater
         {
             Console.WriteLine($"❌ Lỗi khi đọc thông tin: {ex.Message}");
         }
+        
+        return Task.CompletedTask;
     }
 }

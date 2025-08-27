@@ -40,10 +40,11 @@ public class HDiffPatcher
     /// <param name="gamePath">Đường dẫn thư mục game (F:\StarRail)</param>
     /// <param name="hdiffArchivePath">Đường dẫn file hdiff 7z (F:\StarRail_3.5.51_3.5.52_hdiff_seg.7z)</param>
     /// <param name="progress">Callback để báo cáo tiến trình</param>
+    /// <param name="password">Password cho file 7z được mã hóa (nếu có)</param>
     /// <returns>True nếu patch thành công</returns>
-    public async Task<bool> ApplyPatchAsync(string gamePath, string hdiffArchivePath, IProgress<string>? progress = null)
+    public async Task<bool> ApplyPatchAsync(string gamePath, string hdiffArchivePath, IProgress<string>? progress = null, string? password = null)
     {
-        return await ApplyPatchesAsync(gamePath, new[] { hdiffArchivePath }, progress);
+        return await ApplyPatchesAsync(gamePath, new[] { hdiffArchivePath }, progress, password);
     }
 
     /// <summary>
@@ -52,8 +53,9 @@ public class HDiffPatcher
     /// <param name="gamePath">Đường dẫn thư mục game</param>
     /// <param name="hdiffArchivePaths">Danh sách đường dẫn các file hdiff 7z</param>
     /// <param name="progress">Callback để báo cáo tiến trình</param>
+    /// <param name="password">Password cho file 7z được mã hóa (nếu có)</param>
     /// <returns>True nếu patch thành công</returns>
-    public async Task<bool> ApplyPatchesAsync(string gamePath, string[] hdiffArchivePaths, IProgress<string>? progress = null)
+    public async Task<bool> ApplyPatchesAsync(string gamePath, string[] hdiffArchivePaths, IProgress<string>? progress = null, string? password = null)
     {
         try
         {
@@ -105,7 +107,7 @@ public class HDiffPatcher
                     var archiveTempDir = Path.Combine(tempDir, $"archive_{i}");
                     Directory.CreateDirectory(archiveTempDir);
                     
-                    await ExtractHDiffArchiveAsync(archivePath, archiveTempDir);
+                    await ExtractHDiffArchiveAsync(archivePath, archiveTempDir, password);
                     _logger.Info($"Giải nén hoàn tất file {i + 1}");
                 }
 
@@ -184,15 +186,19 @@ public class HDiffPatcher
         }
     }
 
-    private async Task ExtractHDiffArchiveAsync(string archivePath, string extractPath)
+    private async Task ExtractHDiffArchiveAsync(string archivePath, string extractPath, string? password = null)
     {
         // Sử dụng 7-Zip command line để giải nén
         var sevenZipPath = Find7ZipExecutable();
         
+        // Thêm password vào arguments nếu có
+        var passwordArg = !string.IsNullOrEmpty(password) ? $" -p\"{password}\"" : "";
+        var arguments = $"x \"{archivePath}\" -o\"{extractPath}\" -y{passwordArg}";
+        
         var startInfo = new ProcessStartInfo
         {
             FileName = sevenZipPath,
-            Arguments = $"x \"{archivePath}\" -o\"{extractPath}\" -y",
+            Arguments = arguments,
             UseShellExecute = false,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
@@ -209,6 +215,13 @@ public class HDiffPatcher
 
         if (process.ExitCode != 0)
         {
+            // Kiểm tra nếu lỗi là do password sai hoặc cần password
+            if (error.Contains("Wrong password") || error.Contains("Cannot open encrypted archive") || 
+                error.Contains("Data error") || output.Contains("Enter password"))
+            {
+                throw new UnauthorizedAccessException("File 7z được mã hóa. Cần nhập password đúng để giải nén.");
+            }
+            
             throw new InvalidOperationException($"7-Zip extraction failed: {error}");
         }
         
@@ -1119,8 +1132,8 @@ public class HDiffPatcher
             }
         }
 
-        // Không tìm thấy - trả về null thay vì throw exception
-        return null;
+        // Không tìm thấy - trả về empty string thay vì null
+        return "";
     }
 
     private string Find7ZipExecutable()
