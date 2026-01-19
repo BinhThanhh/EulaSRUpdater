@@ -1,9 +1,11 @@
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    tags:
+      - 'v*'
   workflow_dispatch:
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -13,29 +15,33 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
-    # CẬP NHẬT: Project của bạn dùng .NET 9 (theo log obj/net9.0)
     - name: Install .NET 9.0
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 9.0.x 
+        dotnet-version: 9.0.x
 
-    - name: Publish Windows Exe
+    - name: Publish & Zip
       run: |
-        # SỬA LỖI: Tìm file EulaSR.csproj thay vì EulaSRUpdater.csproj
         $projectPath = Get-ChildItem -Path . -Filter "EulaSR.csproj" -Recurse | Select-Object -ExpandProperty FullName -First 1
-        
         if ($null -eq $projectPath) {
           Write-Error "Khong tim thay file EulaSR.csproj!"
           exit 1
         }
-        
-        Write-Host "Dang build file: $projectPath"
-        
-        # Build ra file .exe duy nhất
+        Write-Host "Building project: $projectPath"
         dotnet publish "$projectPath" -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o ./publish
+        Compress-Archive -Path ./publish/* -DestinationPath ./EulaSRUpdater.zip
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: EulaSRUpdater-Build
-        path: ./publish
+        name: Build-Artifacts
+        path: ./EulaSRUpdater.zip
+
+
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v2
+      with:
+        files: EulaSRUpdater.zip
+        # Tự động lấy nội dung commit làm ghi chú release
+        generate_release_notes: true
