@@ -1,38 +1,41 @@
 # EULA SR Game Updater
 
-Công cụ cập nhật Honkai: Star Rail bằng file hdiff.
+Tool update Honkai Star Rail using hdiff.
 
-## Yêu cầu hệ thống
+## Requirements
 
 - Windows 10/11
 - .NET 9.0 Runtime
-- 7-Zip (tải từ [7-zip.org](https://www.7-zip.org/))
+- 7-Zip (download from [7-zip.org](https://www.7-zip.org/))
 
-## Cài đặt
+## Installation
 
-1. **Cài đặt 7-Zip:**
-   - Tải từ: https://www.7-zip.org/
-   - Cài đặt bình thường (sẽ tự động thêm vào PATH)
+1. **Install 7-Zip:**
+   - Download from: https://www.7-zip.org/
+   - Install normally (will automatically add to PATH)
 
-2. **Biên dịch:**
+2. **Build:**
+
    ```bash
    dotnet build --configuration Release
    ```
 
-3. **Chạy:**
+3. **Run:**
+
    ```bash
    dotnet run
    ```
-   
-   Hoặc sử dụng file batch:
+
+   Or use batch file:
+
    ```bash
    run.bat
    ```
 
-## Xử lý lỗi
+## Error handling
 
-|        Lỗi              |           Nguyên nhân          |         Giải pháp                |
-|-------------------------|--------------------------------|----------------------------------|
-| Insufficient disk space | Không đủ dung lượng            | Giải phóng dung lượng ổ đĩa      |
-| Permission denied       | Thiếu quyền ghi                | Chạy với quyền Administrator     |
-| File not found          | Đường dẫn sai                  | Kiểm tra đường dẫn game và hdiff |
+| Error                   | Reason                   | Solution                       |
+| ----------------------- | ------------------------ | ------------------------------ |
+| Insufficient disk space | Not enough disk space    | Free up disk space             |
+| Permission denied       | Insufficient permissions | Run as Administrator           |
+| File not found          | Path is wrong            | Check game path and hdiff path |
